@@ -1,26 +1,34 @@
-# 1. مرحلة البناء باستخدام Bun
-FROM oven/bun:1 AS builder
+# مرحلة البناء
+FROM oven/bun:1 AS build
 WORKDIR /app
 
-# نسخ ملفات الحزم وتثبيتها
-COPY package.json bun.lock* ./
-RUN bun install
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-# نسخ باقي الملفات وبناء المشروع
 COPY . .
+
+# استقبال متغيرات البناء لربط السيرفر بـ Supabase
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ARG VITE_SUPABASE_PROJECT_ID
+
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
+
 RUN bun run build
 
-# 2. مرحلة التشغيل باستخدام Node.js
-FROM node:20-alpine
+# مرحلة التشغيل (Runtime) باستخدام Node.js آمن وخفيف
+FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 
-# نسخ نواتج بناء الخادم من مرحلة البناء
-COPY --from=builder /app/.output ./.output
-
-# تحديد المنفذ (Port) وغالباً يكون 3000 أو حسب إعدادات خادم Nitro
-EXPOSE 3000
-ENV PORT=3000
+ENV NODE_ENV=production
 ENV HOST=0.0.0.0
+ENV PORT=3000
 
-# تشغيل خادم Node.js مباشرة
+COPY --from=build --chown=node:node /app/.output ./.output
+
+USER node
+EXPOSE 3000
+
 CMD ["node", ".output/server/index.mjs"]
