@@ -1,27 +1,26 @@
-# مرحلة البناء باستخدام Bun
+# 1. مرحلة البناء باستخدام Bun
 FROM oven/bun:1 AS builder
 WORKDIR /app
 
-# نسخ ملفات الحزم والاعتماديات أولاً
+# نسخ ملفات الحزم وتثبيتها
 COPY package.json bun.lock* ./
 RUN bun install
 
-# نسخ باقي ملفات المشروع وتنفيذ أمر البناء
+# نسخ باقي الملفات وبناء المشروع
 COPY . .
 RUN bun run build
 
-# مرحلة التشغيل باستخدام Nginx
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html/
+# 2. مرحلة التشغيل باستخدام Node.js
+FROM node:20-alpine
+WORKDIR /app
 
-# مسح ملفات nginx الافتراضية
-RUN rm -rf ./*
+# نسخ نواتج بناء الخادم من مرحلة البناء
+COPY --from=builder /app/.output ./.output
 
-# نسخ الملفات الناتجة (في حال كانت داخل .output/public أو .output)
-# سنقوم بنسخ مجلد public أو الـ dist الناتج حسب مسار Nitro
-COPY --from=builder /app/.output/public /usr/share/nginx/html/
-# أو إذا كان الناتج في مجلد dist التقليدي (يمكنك تعديل السطر حسب الحاجة):
-# COPY --from=builder /app/dist /usr/share/nginx/html/
+# تحديد المنفذ (Port) وغالباً يكون 3000 أو حسب إعدادات خادم Nitro
+EXPOSE 3000
+ENV PORT=3000
+ENV HOST=0.0.0.0
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# تشغيل خادم Node.js مباشرة
+CMD ["node", ".output/server/index.mjs"]
