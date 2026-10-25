@@ -17,8 +17,11 @@ WORKDIR /usr/share/nginx/html/
 # مسح ملفات nginx الافتراضية
 RUN rm -rf ./*
 
-# نسخ نواتج بناء TanStack Start
-COPY --from=builder /app/.output/public .
+# نسخ الملفات الناتجة (في حال كانت داخل .output/public أو .output)
+# سنقوم بنسخ مجلد public أو الـ dist الناتج حسب مسار Nitro
+COPY --from=builder /app/.output/public /usr/share/nginx/html/
+# أو إذا كان الناتج في مجلد dist التقليدي (يمكنك تعديل السطر حسب الحاجة):
+# COPY --from=builder /app/dist /usr/share/nginx/html/
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
