@@ -1,0 +1,46 @@
+# Requested changes (bot v9 + site move)
+- [x] Move website into this project (Cloud schema, secrets)
+- [x] Bot: /xo without mention = group tournament (max 12, 1 min lobby, start button, bye for odd, 20s per turn)
+- [x] Bot: flags endless for anyone, skip (starter, after 10s), stop (starter)
+- [x] Bot: only one game running at a time (per server)
+- [x] Bot: push credit balances + transfers to site; apply daily reward
+- [x] Site: signed-in home like image 1
+- [x] Site: leaderboard page (wealth / interaction) like images 2-3
+- [x] Site: updates page + owner posts from admin
+- [x] Site: daily reward (1000-5000, mostly >2000, every 24h) with history
+- [x] Site: transactions page with search like images 6-7
+- [ ] Blocked: Discord login redirect for the new address must be added in Discord Developer Portal; bot .env DASHBOARD_URL + BOT_API_SECRET must be updated by user
+- [ ] Blocked: old data from previous site not carried over (needs export)
+- [x] Bot: stickers, aemoji, banner, vkick, vmute, move, moveme, moveto, moveall
+- [x] Site: self-assignable roles section (buttons / menu / reactions)
+- [x] Site: shareable public profile /u/<id> (live every 5s)
+- [x] Site: shop (backgrounds, badges) paid with bot credits
+- [x] Bot: /whois (من يكون؟) and /password (كلمة السر) games
+- [x] Bot: suggestions with vote buttons + admin accept/reject
+- [x] Bot: /mcplayer, /mcskin, richer /mcstatus (Java/Bedrock, live players)
+- [x] Site: profile bio/colour/avatar frame/name effect; shop frames + effects
+- [x] Site: inventory page, gifting shop items, achievements page
+- [x] Site: owner shop management (prices, hide, add items)
+- [x] Site: likes on updates; commands page with examples
+- [x] Site: scheduled announcements (once/daily/weekly) in server dashboard
+- [x] Site: dashboard roles per server (owner / manager / moderator)
+- [x] Site: English UI toggle (already existed); server activity (already in Overview)
+- [x] Overview: remove daily reward box, add public profile button
+- [x] Leaderboard: wealth tab first
+- [x] Shop: remove profile/inventory buttons, live preview, using an item saves instantly
+- [x] Bot /profile card uses shop look (background, frame, effect, colour, badges, bio)
+- [x] Self roles: warn when a role is above the bot's role and show last send result
+- [x] Bot: music plays no audio (ffmpeg missing on user's PC) — auto-setup ffmpeg + clearer error
+- [x] Bot settings: language as dropdown, more language options
+- [x] Logs: option text embed vs image cards (bot renders log images)
+- [x] Dashboard sidebar regrouped: Settings / Administration / Interaction / Systems
+- [x] Overview: 7 live stats (5s refresh, default last 24h), remove heatmap + top 10 days, add top channels, latest punishments, joins/leaves list
+- [x] Members: spacing before numbers, renamed filters, member name opens public profile
+- [x] Create: counter channel names (👥・الأعضاء : {n}, 🔊・في الفويس : {n}, 💎・البوستات : {n})
+- [x] Activity log: only server-settings changes for that server
+- [x] Bot text edits: /credit (wording, user then amount), /profile, /top (bar colour 127,212,193), /server (owner, boosts AR, order)
+- [x] Bot moderation replies: ban/unban/kick/warn/unwarn/clearwarns/mute(permanent default)/unmute/timeout/untimeout — new template, mention once
+- [x] Site: owner can edit bot reply texts and bot uses them
+
+## Done (Oct 21 request)
+- [x] Invites tab in overview, stats channels section, auto-reply dialog, shop +50 per kind with tabs, automod (site + bot v18)

@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791978777240,
+      "tag": "0000_restore_spire_dashboard",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792361751967,
+      "tag": "0001_restore_spire_and_economy",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792361911784,
+      "tag": "0002_interaction_leaderboard",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792375272141,
+      "tag": "0003_profiles_shop",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792377217279,
+      "tag": "0004_profiles_shop_access_schedule",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792459831412,
+      "tag": "0005_music_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792463606801,
+      "tag": "0006_guild_live",
+      "breakpoints": true
+    }
+  ]
+}

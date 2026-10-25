@@ -1,0 +1,90 @@
+CREATE TABLE IF NOT EXISTS public.guild_settings (guild_id text PRIMARY KEY, ticket jsonb NOT NULL DEFAULT '{}', aliases jsonb NOT NULL DEFAULT '[]', modules jsonb NOT NULL DEFAULT '{}', updated_at timestamptz NOT NULL DEFAULT now(), updated_by text);
+GRANT ALL ON public.guild_settings TO service_role;
+ALTER TABLE public.guild_settings ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS public.guild_telemetry (guild_id text PRIMARY KEY, snapshot jsonb NOT NULL DEFAULT '{}', updated_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.guild_telemetry TO service_role;
+ALTER TABLE public.guild_telemetry ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS public.bot_leaderboards (id text PRIMARY KEY, snapshot jsonb NOT NULL DEFAULT '{}', updated_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.bot_leaderboards TO service_role;
+ALTER TABLE public.bot_leaderboards ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS public.guild_embeds (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), guild_id text NOT NULL, name text NOT NULL, data jsonb NOT NULL DEFAULT '{}', last_channel_id text, last_message_id text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.guild_embeds TO service_role;
+ALTER TABLE public.guild_embeds ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS guild_embeds_guild_idx ON public.guild_embeds(guild_id);
+CREATE TABLE IF NOT EXISTS public.bot_jobs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), guild_id text NOT NULL, type text NOT NULL, payload jsonb NOT NULL DEFAULT '{}', status text NOT NULL DEFAULT 'pending', result text, created_by text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), claimed_by text, claimed_at timestamptz);
+GRANT ALL ON public.bot_jobs TO service_role;
+ALTER TABLE public.bot_jobs ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS bot_jobs_status_idx ON public.bot_jobs(status, created_at);
+CREATE INDEX IF NOT EXISTS bot_jobs_guild_idx ON public.bot_jobs(guild_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS bot_jobs_one_active_setup ON public.bot_jobs(guild_id,type) WHERE status IN ('pending','running') AND type IN ('stats','logs','tempvoice','ticket');
+CREATE TABLE IF NOT EXISTS public.member_stats (guild_id text NOT NULL, user_id text NOT NULL, username text, display_name text, avatar text, created_at_discord timestamptz, joined_at timestamptz, in_guild boolean NOT NULL DEFAULT true, is_booster boolean NOT NULL DEFAULT false, level int NOT NULL DEFAULT 0, xp int NOT NULL DEFAULT 0, messages int NOT NULL DEFAULT 0, voice_seconds bigint NOT NULL DEFAULT 0, posts int NOT NULL DEFAULT 0, invites_total int NOT NULL DEFAULT 0, invites_left int NOT NULL DEFAULT 0, invites_fake int NOT NULL DEFAULT 0, muted_until timestamptz, banned boolean NOT NULL DEFAULT false, ban_reason text, banned_at timestamptz, updated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (guild_id,user_id));
+GRANT ALL ON public.member_stats TO service_role;
+ALTER TABLE public.member_stats ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS member_stats_presence ON public.member_stats(guild_id,in_guild,joined_at DESC);
+CREATE INDEX IF NOT EXISTS member_stats_banned ON public.member_stats(guild_id,banned);
+CREATE TABLE IF NOT EXISTS public.member_punishments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), guild_id text NOT NULL, user_id text NOT NULL, kind text NOT NULL, reason text, moderator_id text, moderator_name text, duration_seconds bigint, external_id text, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.member_punishments TO service_role;
+ALTER TABLE public.member_punishments ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS member_punishments_user_idx ON public.member_punishments(guild_id,user_id,created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS member_punishments_ext_idx ON public.member_punishments(guild_id,external_id);
+CREATE TABLE IF NOT EXISTS public.member_notes (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), guild_id text NOT NULL, user_id text NOT NULL, author_id text NOT NULL, author_name text, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.member_notes TO service_role;
+ALTER TABLE public.member_notes ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS member_notes_user_idx ON public.member_notes(guild_id,user_id,created_at DESC);
+CREATE TABLE IF NOT EXISTS public.ticket_transcripts (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), guild_id text NOT NULL, user_id text NOT NULL, channel_id text, channel_name text, ticket_type text, closed_by text, opened_at timestamptz, closed_at timestamptz NOT NULL DEFAULT now(), html text NOT NULL);
+GRANT ALL ON public.ticket_transcripts TO service_role;
+ALTER TABLE public.ticket_transcripts ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS ticket_transcripts_user_idx ON public.ticket_transcripts(guild_id,user_id,closed_at DESC);
+CREATE TABLE IF NOT EXISTS public.member_invites (guild_id text NOT NULL, invited_id text NOT NULL, inviter_id text NOT NULL, joined_at timestamptz, left_at timestamptz, left_guild boolean NOT NULL DEFAULT false, fake boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(guild_id,invited_id));
+GRANT ALL ON public.member_invites TO service_role;
+ALTER TABLE public.member_invites ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS member_invites_inviter_idx ON public.member_invites(guild_id,inviter_id);
+CREATE TABLE IF NOT EXISTS public.site_users (user_id text PRIMARY KEY, username text, avatar text, last_login timestamptz NOT NULL DEFAULT now(), first_login timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.site_users TO service_role;
+ALTER TABLE public.site_users ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS public.site_activity (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text NOT NULL, username text, guild_id text, action text NOT NULL, details jsonb NOT NULL DEFAULT '{}', created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.site_activity TO service_role;
+ALTER TABLE public.site_activity ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS site_activity_guild_idx ON public.site_activity(guild_id,created_at DESC);
+CREATE TABLE IF NOT EXISTS public.site_roles (user_id text NOT NULL, role text NOT NULL, PRIMARY KEY(user_id,role));
+GRANT ALL ON public.site_roles TO service_role;
+ALTER TABLE public.site_roles ENABLE ROW LEVEL SECURITY;
+CREATE OR REPLACE FUNCTION public.claim_bot_jobs(worker text, guild_ids text[]) RETURNS SETOF public.bot_jobs LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$
+WITH selected AS (SELECT id FROM public.bot_jobs WHERE status='pending' AND guild_id=ANY(guild_ids) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 20)
+UPDATE public.bot_jobs SET status='running',claimed_by=worker,claimed_at=now(),updated_at=now() WHERE id IN (SELECT id FROM selected) RETURNING *;
+$$;
+REVOKE ALL ON FUNCTION public.claim_bot_jobs(text,text[]) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_bot_jobs(text,text[]) TO service_role;
+
+CREATE TABLE IF NOT EXISTS public.credit_balances (user_id text PRIMARY KEY, username text, avatar text, credits bigint NOT NULL DEFAULT 0, updated_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.credit_balances TO service_role;
+ALTER TABLE public.credit_balances ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS credit_balances_rank_idx ON public.credit_balances(credits DESC);
+
+CREATE TABLE IF NOT EXISTS public.credit_ledger (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), kind text NOT NULL, from_id text, from_name text, from_avatar text, to_id text, to_name text, to_avatar text, amount bigint NOT NULL, from_balance bigint, to_balance bigint, note text, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.credit_ledger TO service_role;
+ALTER TABLE public.credit_ledger ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS credit_ledger_from_idx ON public.credit_ledger(from_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS credit_ledger_to_idx ON public.credit_ledger(to_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.daily_rewards (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text NOT NULL, amount int NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.daily_rewards TO service_role;
+ALTER TABLE public.daily_rewards ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS daily_rewards_user_idx ON public.daily_rewards(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.site_posts (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), title text NOT NULL, body text NOT NULL, image_url text, author_id text NOT NULL, author_name text, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.site_posts TO service_role;
+ALTER TABLE public.site_posts ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION public.claim_daily_reward(p_user text, p_amount int) RETURNS public.daily_rewards LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r public.daily_rewards;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('daily:' || p_user));
+  IF EXISTS (SELECT 1 FROM public.daily_rewards WHERE user_id = p_user AND created_at > now() - interval '24 hours') THEN
+    RAISE EXCEPTION 'TOO_SOON';
+  END IF;
+  INSERT INTO public.daily_rewards(user_id, amount) VALUES (p_user, p_amount) RETURNING * INTO r;
+  RETURN r;
+END $$;
+REVOKE ALL ON FUNCTION public.claim_daily_reward(text,int) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_daily_reward(text,int) TO service_role;

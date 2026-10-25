@@ -1,0 +1,68 @@
+{
+  "source": "code-archive",
+  "capabilities": [
+    {
+      "capability": "site code and UI",
+      "source": "uploaded archive",
+      "outcome": "preserve and edit overview",
+      "status": "verified_presentation",
+      "next_action": "real authenticated verification requires credentials"
+    },
+    {
+      "capability": "schema",
+      "source": "Drizzle SQL",
+      "outcome": "migrate to Lovable Cloud",
+      "status": "applied",
+      "next_action": "import existing records when supplied"
+    },
+    {
+      "capability": "existing records and user metadata",
+      "source": "not included",
+      "outcome": "migrate",
+      "status": "blocked",
+      "next_action": "request CSV or JSON export"
+    },
+    {
+      "capability": "Discord identity and authorization",
+      "source": "existing encrypted Discord sessions and guild checks",
+      "outcome": "preserve external provider and session boundaries",
+      "status": "unverified",
+      "next_action": "bot credential probe returned HTTP 403; real Discord sign-in and guild access verification needed"
+    },
+    {
+      "capability": "media",
+      "source": "bundled mascot and asset pointer",
+      "outcome": "preserve",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "public bot endpoints",
+      "source": "existing authenticated bot APIs",
+      "outcome": "preserve",
+      "status": "preserved_unverified",
+      "next_action": "shared secret saved; external bot source and endpoint verification still required"
+    },
+    {
+      "capability": "persistent bot process",
+      "source": "not included in archive",
+      "outcome": "external hosting required",
+      "status": "blocked",
+      "next_action": "user supplies bot source and persistent host"
+    },
+    {
+      "capability": "provider secrets",
+      "source": "exposed chat credentials",
+      "outcome": "request replacements securely",
+      "status": "saved",
+      "next_action": "values are configured; rotation not independently verified"
+    },
+    {
+      "capability": "OAuth redirect cutover and publication",
+      "source": "same-origin callback",
+      "outcome": "published domain callback",
+      "status": "pending",
+      "next_action": "publish then register exact callback in Discord"
+    }
+  ]
+}
