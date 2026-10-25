@@ -1,10 +1,8 @@
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  tanstackStart: {
-    server: { entry: "server" },
+  test: {
+    globals: true,
+    environment: 'jsdom',
   },
-  nitro: {
-    preset: "node-server",
-  },
-});
+})
