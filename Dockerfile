@@ -1,16 +1,16 @@
-# 1. مرحلة البناء (Build Stage)
-FROM node:20-alpine AS builder
+# مرحلة البناء باستخدام Bun
+FROM oven/bun:1 AS builder
 WORKDIR /app
 
-# نسخ ملفات الحزم وتثبيتها
-COPY package.json ./
-RUN npm install
+# نسخ ملفات الحزم والاعتماديات أولاً
+COPY package.json bun.lock* ./
+RUN bun install
 
 # نسخ باقي ملفات المشروع وتنفيذ أمر البناء
 COPY . .
-RUN npm run build
+RUN bun run build
 
-# 2. مرحلة النشر والتشغيل (Production Stage)
+# مرحلة التشغيل باستخدام Nginx
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html/
 
